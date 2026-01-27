@@ -1,0 +1,26 @@
+{
+  "manifest_version": 1,
+  "name": "麦麦消息过滤插件",
+  "version": "1.0.0",
+  "description": "拦截/替换bot发出的消息，防止bot发出你不想让bot发出的信息。允许用户使用正则表达式自定义过滤规则，对匹配命中的消息可选择拦截/替换两种处理方式。支持概率设定。",
+  "author": {
+    "name": "鲨鱼",
+    "url": "https://github.com/HyperSharkawa"
+  },
+  "license": "GPLv3",
+  "host_application": {
+    "min_version": "0.11.6"
+  },
+  "homepage_url": "https://github.com/HyperSharkawa/maibot-message-filter-plugin",
+  "repository_url": "https://github.com/HyperSharkawa/maibot-message-filter-plugin",
+  "keywords": [
+    "拦截",
+    "过滤"
+  ],
+  "categories": [
+    "Utility Tools",
+    "Other"
+  ],
+  "default_locale": "CN",
+  "locales_path": "_locales"
+}
