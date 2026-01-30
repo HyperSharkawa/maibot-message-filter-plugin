@@ -35,7 +35,9 @@ class MessageFilterEventHandler(BaseEventHandler):
             return True, True, "消息内容为空", None, None
 
         modified = False
-        current_text = message.plain_text
+        message_segments = message.message_segments
+        origin_text = "".join([seg.data for seg in message_segments if seg.type == "text"])
+        current_text = origin_text
 
         for rule in rules:
             pattern = rule.get("pattern")
@@ -72,13 +74,20 @@ class MessageFilterEventHandler(BaseEventHandler):
         if modified:
             segments = message.message_segments
             if len(message.message_segments) > 1:
-                segments = [Seg(type='text', data=current_text)]
-                for seg in segments: # 保留非文本段
-                    if seg.type != 'text':
-                        segments.append(seg)
+                # 多段消息时只修改第一段文本，删除其他文本段,保留非文本段
+                replaced = False
+                for seg in segments:
+                    if seg.type != "text":
+                        continue
+                    if not replaced:
+                        seg.data = current_text
+                        replaced = True
+                        continue
+                    segments.remove(seg)
             else:
                 segments[0].data = current_text
             message.modify_message_segments(segments)
+            logger.debug(f"[{message.stream_id}] 消息内容已更新,原内容: “{origin_text}” 新内容: “{current_text}”")
             return True, True, "已按规则替换部分内容", None, message
 
         return True, True, "已放行消息", None, None
