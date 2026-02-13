@@ -208,80 +208,109 @@ class MessageFilterPlugin(BasePlugin):
     config_schema = {
         "message_filter_plugin": {
             "enable": ConfigField(type=bool, default=True, description="是否启用消息过滤"),
-            "rules": ConfigField(
+            "pre_send_rules": ConfigField(
                 type=list,
                 item_type="object",
                 item_fields={
-                    "pattern": {"type": "string", "label": "正则表达式",
-                                "placeholder": "要被替换/拦截的内容，支持正则表达式"},
+                    "pattern": {
+                        "type": "string",
+                        "label": "正则表达式",
+                        "placeholder": "要被替换/拦截的内容，支持正则表达式"
+                    },
                     "action": {
                         "type": "select",
                         "label": "动作",
                         "choices": ["拦截整条消息", "替换命中文字"],
                         "default": "拦截整条消息"
                     },
-                    "stage": {
-                        "type": "select",
-                        "label": "处理时机",
-                        "choices": ["发送前处理", "LLM响应后处理"],
-                        "default": "发送前处理"
-                    },
                     "replacement": {"type": "string", "label": "替换为", "placeholder": "仅在替换动作时有效"},
-                    "probability": {"type": "number", "label": "当规则命中后进行动作的概率(0-1)。设为1代表永远触发",
-                                    "default": 1.0},
-                    "description": {"type": "string", "label": "规则描述",
-                                    "placeholder": "可选，对该规则的简短描述，仅便于查看，不会影响功能"},
+                    "probability": {
+                        "type": "number",
+                        "label": "当规则命中后进行动作的概率(0-1)。设为1代表永远触发",
+                        "default": 1.0
+                    },
+                    "description": {
+                        "type": "string",
+                        "label": "规则描述",
+                        "placeholder": "可选，对该规则的简短描述，仅便于查看，不会影响功能"
+                    },
                 },
                 default=[
-                    {"pattern": "RESOURCE_EXHAUSTED", "action": "拦截整条消息", "stage": "LLM响应后处理",
+                    {
+                        "pattern": "。$",
+                        "action": "替换命中文字",
+                        "replacement": "",
+                        "probability": 1.0,
+                        "description": "删除句末的句号"},
+                ],
+                description="发送前处理规则：会在一条消息被发送前处理(如果启用了回复分割，这里处理的是单独的一句句话)。拦截整条消息将直接取消发送；替换文字则只会修改命中的部分。当规则命中后会根据概率决定是否执行对应动作。"
+            ),
+            "after_llm_rules": ConfigField(
+                type=list,
+                item_type="object",
+                item_fields={
+                    "pattern": {
+                        "type": "string",
+                        "label": "正则表达式",
+                        "placeholder": "要被替换/拦截的内容，支持正则表达式"
+                    },
+                    "action": {
+                        "type": "select",
+                        "label": "动作",
+                        "choices": ["拦截整条消息", "替换命中文字"],
+                        "default": "拦截整条消息"
+                    },
+                    "replacement": {"type": "string", "label": "替换为", "placeholder": "仅在替换动作时有效"},
+                    "probability": {
+                        "type": "number",
+                        "label": "当规则命中后进行动作的概率(0-1)。设为1代表永远触发",
+                        "default": 1.0
+                    },
+                    "description": {
+                        "type": "string",
+                        "label": "规则描述",
+                        "placeholder": "可选，对该规则的简短描述，仅便于查看，不会影响功能"
+                    },
+                },
+                default=[
+                    {"pattern": "RESOURCE_EXHAUSTED", "action": "拦截整条消息",
                      "replacement": "", "probability": 1.0,
                      "description": "拦截部分API中转站会返回的错误消息"},
-                    {"pattern": "傻逼", "action": "替换命中文字", "stage": "LLM响应后处理", "replacement": "[filtered]",
+                    {"pattern": "傻逼", "action": "替换命中文字", "replacement": "[filtered]",
                      "probability": 1.0,
                      "description": "替换不当用语"},
-                    {"pattern": "。$", "action": "替换命中文字", "stage": "发送前处理", "replacement": "",
-                     "probability": 1.0,
-                     "description": "删除句末的句号"},
                     {"pattern": "\[回复.+]\s*", "action": "替换命中文字", "stage": "LLM响应后处理", "replacement": "",
                      "probability": 1.0,
                      "description": "删除笨蛋模型返回的回复引用"},
-                    {"pattern": "\s*\[戳一戳消息:.+]\s*", "action": "替换命中文字", "stage": "LLM响应后处理", "replacement": "",
+                    {"pattern": "\s*\[戳一戳消息:.+]\s*", "action": "替换命中文字", "replacement": "",
                      "probability": 1.0,
                      "description": "删除笨蛋模型返回的戳一戳"},
-                    {"pattern": "<\|begin_of_box\|>", "action": "替换命中文字", "stage": "LLM响应后处理",
+                    {"pattern": "<\|begin_of_box\|>", "action": "替换命中文字",
                      "replacement": "",
                      "probability": 1.0,
                      "description": "删除硅基流动的GLM-4.6V返回的标签"},
-                    {"pattern": "<\|end_of_box\|>", "action": "替换命中文字", "stage": "LLM响应后处理",
+                    {"pattern": "<\|end_of_box\|>", "action": "替换命中文字",
                      "replacement": "",
                      "probability": 1.0,
                      "description": "删除硅基流动的GLM-4.6V返回的标签"}
                 ],
-                description="配置过滤规则。拦截整条消息将直接取消发送；替换文字则只会修改命中的部分。发送前处理会单独处理每一条要发出去的消息(如果启用了回复分割，这里处理的是单独的一句句话);LLM响应后处理会处理回复模型返回的整段内容。当规则命中后会根据概率决定是否执行对应动作。"
+                description="LLM响应后处理规则：会在LLM响应成功后处理回复模型返回的整段内容。拦截整条消息将直接取消发送；替换文字则只会修改命中的部分。当规则命中后会根据概率决定是否执行对应动作。"
             ),
         }
     }
 
     def get_plugin_components(self) -> List[Tuple[ComponentInfo, Type]]:
         components = []
-        all_rules: List[dict] = self.config.get("message_filter_plugin", {}).get("rules", [])
-
-        pre_send_rules: List[dict] = []
-        after_llm_rules: List[dict] = []
-
-        for rule in all_rules:
-            stage = rule.get("stage", "发送前处理")
-            if stage == "LLM响应后处理":
-                after_llm_rules.append(rule)
-            else:
-                pre_send_rules.append(rule)
+        pre_send_rules: List[dict] = self.config.get("message_filter_plugin", {}).get("pre_send_rules", [])
+        after_llm_rules: List[dict] = self.config.get("message_filter_plugin", {}).get("after_llm_rules", [])
 
         PreSendMessageFilterEventHandler.rules = pre_send_rules
         LLMResponseFilterEventHandler.rules = after_llm_rules
 
         if self.config.get("message_filter_plugin", {}).get("enable", {}):
             if pre_send_rules:
-                components.append((PreSendMessageFilterEventHandler.get_handler_info(), PreSendMessageFilterEventHandler))
+                components.append(
+                    (PreSendMessageFilterEventHandler.get_handler_info(), PreSendMessageFilterEventHandler))
             if after_llm_rules:
                 components.append((LLMResponseFilterEventHandler.get_handler_info(), LLMResponseFilterEventHandler))
         return components
