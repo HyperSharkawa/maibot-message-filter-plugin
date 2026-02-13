@@ -93,14 +93,14 @@ class LLMResponseFilterEventHandler(BaseEventHandler):
     intercept_message = True
     rules: Optional[List[dict]] = []
 
-    async def execute(self, message: MaiMessages | None) -> Tuple[bool, bool, str | None, None, None]:
+    async def execute(self, message: MaiMessages | None) -> Tuple[bool, bool, Optional[str], None, Optional[MaiMessages]]:
         """执行消息过滤逻辑"""
         rules: Optional[List[dict]] = LLMResponseFilterEventHandler.rules
         if not rules:
-            return True, True, "无规则，跳过执行", None, None
+            return True, True, "无规则，跳过执行", None, message
 
         if not message or not message.llm_response_content:
-            return True, True, "消息内容为空", None, None
+            return True, True, "消息内容为空", None, message
 
         origin_text = message.llm_response_content
         current_text = origin_text
@@ -114,7 +114,7 @@ class LLMResponseFilterEventHandler(BaseEventHandler):
             return True, False, f"命中拦截规则: {hit_pattern} 中止后续流程", None, None
 
         if not modified:
-            return True, True, "LLM响应已放行", None, None
+            return True, True, "LLM响应已放行", None, message
         current_text = current_text.strip()
         if not current_text:
             logger.info(f"[{message.stream_id}] 经过替换后的LLM响应内容为空，中止后续流程")
