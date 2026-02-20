@@ -1,1 +1,5 @@
 /src/
+/.idea/
+/pyproject.toml
+/uv.lock
+/.venv/

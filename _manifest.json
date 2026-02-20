@@ -9,7 +9,7 @@
   },
   "license": "GPLv3",
   "host_application": {
-    "min_version": "0.11.6"
+    "min_version": "0.12.0"
   },
   "homepage_url": "https://github.com/HyperSharkawa/maibot-message-filter-plugin",
   "repository_url": "https://github.com/HyperSharkawa/maibot-message-filter-plugin",
