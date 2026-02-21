@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "name": "麦麦消息过滤插件",
-  "version": "1.2.3",
-  "description": "拦截/替换bot发出的消息，防止bot发出你不想让bot发出的信息。允许用户使用正则表达式自定义过滤规则，对匹配命中的消息可选择拦截/替换两种处理方式。支持概率设定。",
+  "version": "1.3.0",
+  "description": "拦截/替换bot发出的消息，防止bot发出你不想让bot发出的信息。支持使用正则表达式自定义过滤规则，对匹配命中的消息可选择拦截/替换/LLM判定是否要发送三种处理方式。支持概率设定。",
   "author": {
     "name": "鲨鱼",
     "url": "https://github.com/HyperSharkawa"
