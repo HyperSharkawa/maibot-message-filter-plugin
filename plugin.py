@@ -172,6 +172,7 @@ class LLMResponseFilterEventHandler(BaseEventHandler):
     handler_name = "llm_response_filter_event_handler"
     handler_description = "检测LLM响应，若命中用户设置的规则则进行相应的处理"
     intercept_message = True
+    weight = 999
     rules: Optional[List[dict]] = []
     llm_check_settings: Optional[Dict[str, str | int]] = {
         "model": "utils",
